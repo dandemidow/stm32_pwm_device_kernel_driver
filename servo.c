@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
+/**
  * Copyright (C) Demidov 2022
  *
  * Authors: Danila Demidov <dandemidow@gmail.com>
  */
 
 #include <linux/component.h>
+#include <linux/fs.h>
+#include <linux/miscdevice.h>
 #include <linux/module.h>
 #include <linux/of_platform.h>
-#include <linux/miscdevice.h>
-#include <linux/fs.h>
+#include <linux/platform_device.h>
+#include <linux/uaccess.h>
+
+static unsigned int ang_data;
 
 static int servo_open(struct inode *inode, struct file *file)
 {
@@ -24,12 +28,25 @@ static int servo_release(struct inode *inode, struct file *file)
 static ssize_t servo_write(struct file *file, const char __user *data,
 	                   size_t len, loff_t *ppos)
 {
+    int val,ret;
+    ret = copy_from_user(&val, data, len);
+    printk(KERN_INFO "val:%d\n",val);
+    if(val>100){
+        printk(KERN_INFO "error\n");
+        return -1;
+    }
+    val = 100000 - (val * 1000);
+//    writel_relaxed(val,base + PWM_REG_LPR);
     return 0;
 }
 
 static ssize_t servo_read(struct file *filp, char __user *userbuf, size_t count, loff_t *ppos)
 {
-    return 0;
+    if (copy_to_user(userbuf, &ang_data, sizeof(ang_data)) != 0) {
+      return -EIO;
+    }
+
+    return sizeof(unsigned int);
 }
 
 static long servo_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
