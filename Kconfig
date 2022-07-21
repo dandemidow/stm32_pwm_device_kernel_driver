@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: GPL-2.0-only
+config SERVO_STM
+	bool "Servo motor support for STMicroelectronics boards"
+	depends on ARCH_STM32 || ARCH_MULTIPLATFORM
+        default n
+
+	help
+	  Enable support for servo controller on
+	  STMicroelectronics STM32 MCUs.
+
+config SERVO_STM_MG996
+	tristate "STMicroelectronics specific extensions for servo mg996 motor"
+	depends on SERVO_STM
+	default y
+	help
+	  Choose this option for MIPI DSI support on STMicroelectronics SoC.
