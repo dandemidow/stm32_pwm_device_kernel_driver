@@ -11,9 +11,13 @@
 #include <linux/module.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
+#include <linux/pwm.h>
 #include <linux/uaccess.h>
 
 static unsigned int ang_data;
+struct servo_dev {
+  struct pwm_chip chip;
+};
 
 static int servo_open(struct inode *inode, struct file *file)
 {
