@@ -84,6 +84,22 @@ static int stm_servo_platform_probe(struct platform_device *pdev)
 	    return EINVAL;
 	}
 
+    struct servo_dev *servo_dev;
+    servo_dev = devm_kzalloc(dev, sizeof(*servo_dev), GFP_KERNEL);
+    if (!servo_dev)
+        return -ENOMEM;
+
+    servo_dev->chip.dev = &pdev->dev;
+    servo_dev->chip.ops = //&servo_pwm_ops;
+    servo_dev->chip.base = -1;
+    servo_dev->chip.npwm = 1;
+
+    ret = pwmchip_add(&servo_dev->chip);
+    if (ret < 0)
+        return ret;
+
+    platform_set_drvdata(pdev, servo_dev);
+
 	return 0;
 
 err_put:
