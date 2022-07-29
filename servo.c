@@ -11,9 +11,13 @@
 #include <linux/module.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
+#include <linux/pwm.h>
 #include <linux/uaccess.h>
 
 static unsigned int ang_data;
+struct servo_dev {
+  struct pwm_chip chip;
+};
 
 static int servo_open(struct inode *inode, struct file *file)
 {
@@ -69,6 +73,45 @@ static struct miscdevice misc = {
     .fops = &dev_fops,
 };
 
+
+static int servo_pwm_request(struct pwm_chip *chip, struct pwm_device *pwm) {
+    struct platform_device *pdev = to_platform_device(chip->dev);
+
+    return 0;
+}
+
+static void servo_pwm_free(struct pwm_chip *chip, struct pwm_device *pwm) {
+    struct platform_device *pdev = to_platform_device(chip->dev);
+}
+
+static int servo_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
+                 int duty_ns, int period_ns) {
+    return 0;
+}
+
+static int servo_pwm_polarity(struct pwm_chip *chip, struct pwm_device *pwm,
+                   enum pwm_polarity polarity) {
+    return 0;
+}
+
+static int servo_pwm_enable(struct pwm_chip *chip, struct pwm_device *pwm) {
+    return 0;
+}
+
+static void servo_pwm_disable(struct pwm_chip *chip, struct pwm_device *pwm) {
+
+}
+
+static const struct pwm_ops servo_pwm_ops = {
+    .request = servo_pwm_request,
+    .free = servo_pwm_free,
+    .config = servo_pwm_config,
+    .set_polarity = servo_pwm_polarity,
+    .enable = servo_pwm_enable,
+    .disable = servo_pwm_disable,
+    .owner = THIS_MODULE,
+};
+
 static int stm_servo_platform_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -79,6 +122,22 @@ static int stm_servo_platform_probe(struct platform_device *pdev)
 	    pr_err("could not register smilebrd misc device\n");
 	    return EINVAL;
 	}
+
+    struct servo_dev *servo_dev;
+    servo_dev = devm_kzalloc(dev, sizeof(*servo_dev), GFP_KERNEL);
+    if (!servo_dev)
+        return -ENOMEM;
+
+    servo_dev->chip.dev = &pdev->dev;
+    servo_dev->chip.ops = &servo_pwm_ops;
+    servo_dev->chip.base = -1;
+    servo_dev->chip.npwm = 1;
+
+    ret = pwmchip_add(&servo_dev->chip);
+    if (ret < 0)
+        return ret;
+
+    platform_set_drvdata(pdev, servo_dev);
 
 	return 0;
 
@@ -94,7 +153,7 @@ static int stm_servo_platform_remove(struct platform_device *pdev)
 }
 
 static const struct of_device_id drv_dt_ids[] = {
-	{ .compatible = "st,st-servo"},
+    { .compatible = "st,stm32f429-servo"},
 	{ /* end node */ },
 };
 
