@@ -146,9 +146,17 @@ err_put:
 	return ret;
 }
 
-static int stm_servo_platform_remove(struct platform_device *pdev)
-{
+static int stm_servo_platform_remove(struct platform_device *pdev) {
+    struct servo_dev *servo_dev = platform_get_drvdata(pdev);
+    unsigned int i;
+
     misc_deregister(&misc);
+
+    for (i = 0; i < servo_dev->chip.npwm; i++)
+        pwm_disable(&servo_dev->chip.pwms[i]);
+
+    pwmchip_remove(&servo_dev->chip);
+
 	return 0;
 }
 
@@ -156,6 +164,7 @@ static const struct of_device_id drv_dt_ids[] = {
     { .compatible = "st,stm32f429-servo"},
 	{ /* end node */ },
 };
+MODULE_DEVICE_TABLE(of, drv_dt_ids);
 
 static struct platform_driver stm_servo_platform_driver = {
 	.probe = stm_servo_platform_probe,
@@ -169,6 +178,7 @@ static struct platform_driver stm_servo_platform_driver = {
 
 module_platform_driver(stm_servo_platform_driver);
 
+MODULE_ALIAS("platform:stm32-servo");
 MODULE_AUTHOR("Danila Demidov <dandemidow@gmail.com>");
 MODULE_DESCRIPTION("STMicroelectronics Servo driver");
 MODULE_LICENSE("GPL v2");
