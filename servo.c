@@ -119,14 +119,16 @@ static int stm_servo_platform_probe(struct platform_device *pdev)
 
 	// register miscdevice
 	if(misc_register(&misc)) {
-	    pr_err("could not register smilebrd misc device\n");
-	    return EINVAL;
+        pr_err("could not register servo misc device\n");
+        return -EINVAL;
 	}
 
     struct servo_dev *servo_dev;
     servo_dev = devm_kzalloc(dev, sizeof(*servo_dev), GFP_KERNEL);
-    if (!servo_dev)
+    if (!servo_dev) {
+        printk(KERN_ERR "No memory for servo\n");
         return -ENOMEM;
+    }
 
     servo_dev->chip.dev = &pdev->dev;
     servo_dev->chip.ops = &servo_pwm_ops;
@@ -134,8 +136,10 @@ static int stm_servo_platform_probe(struct platform_device *pdev)
     servo_dev->chip.npwm = 1;
 
     ret = pwmchip_add(&servo_dev->chip);
-    if (ret < 0)
+    if (ret < 0) {
+        printk(KERN_ERR "Couldn't register the PWM chip\n");
         return ret;
+    }
 
     platform_set_drvdata(pdev, servo_dev);
 
