@@ -146,6 +146,8 @@ static int stm_servo_platform_probe(struct platform_device *pdev)
 
     platform_set_drvdata(pdev, servo_dev);
 
+    printk(KERN_ERR "servo: device is registrated\n");
+
 	return 0;
 
 err_put:
