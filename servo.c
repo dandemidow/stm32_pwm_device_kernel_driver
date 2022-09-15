@@ -32,25 +32,28 @@ static int servo_release(struct inode *inode, struct file *file)
 static ssize_t servo_write(struct file *file, const char __user *data,
 	                   size_t len, loff_t *ppos)
 {
-    int val,ret;
-    ret = copy_from_user(&val, data, len);
-    printk(KERN_INFO "val:%d\n",val);
-    if(val>100){
+    int val;
+    if(copy_from_user(&val, data, len)) {
+        return -EFAULT;
+    }
+    printk(KERN_INFO "val:%d\n", val);
+    if(val > 360){
         printk(KERN_INFO "error\n");
-        return -1;
+        return -EFAULT;
     }
     val = 100000 - (val * 1000);
 //    writel_relaxed(val,base + PWM_REG_LPR);
-    return 0;
+    return len;
 }
 
 static ssize_t servo_read(struct file *filp, char __user *userbuf, size_t count, loff_t *ppos)
 {
+    printk(KERN_INFO "read :%d %d\n", count, ang_data);
     if (copy_to_user(userbuf, &ang_data, sizeof(ang_data)) != 0) {
       return -EIO;
     }
 
-    return sizeof(unsigned int);
+    return count;
 }
 
 static long servo_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
@@ -119,7 +122,7 @@ static int stm_servo_platform_probe(struct platform_device *pdev)
 
 	// register miscdevice
 	if(misc_register(&misc)) {
-        pr_err("could not register servo misc device\n");
+        printk(KERN_ERR "Could not register servo misc device\n");
         return -EINVAL;
 	}
 
