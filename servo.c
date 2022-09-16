@@ -48,12 +48,12 @@ static ssize_t servo_write(struct file *file, const char __user *data,
 
 static ssize_t servo_read(struct file *filp, char __user *userbuf, size_t count, loff_t *ppos)
 {
+    int ret = sizeof(uint16_t);
     printk(KERN_INFO "read :%d %d\n", count, ang_data);
-    if (copy_to_user(userbuf, &ang_data, sizeof(ang_data)) != 0) {
-      return -EIO;
+    if(copy_to_user(userbuf, &ang_data, sizeof(ang_data))) {
+        ret = -ENODATA;
     }
-
-    return count;
+    return ret;
 }
 
 static long servo_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
