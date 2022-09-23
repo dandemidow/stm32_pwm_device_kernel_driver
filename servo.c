@@ -52,6 +52,7 @@ static ssize_t servo_read(struct file *filp, char __user *userbuf, size_t count,
     printk(KERN_INFO "read :%d %d %d\n", count, ang_data, *ppos);
     if (*ppos == 0) {
         ret = sizeof(uint16_t);
+        *ppos += ret;
         if(copy_to_user(userbuf, &ang_data, sizeof(ang_data))) {
             ret = -ENODATA;
         }
